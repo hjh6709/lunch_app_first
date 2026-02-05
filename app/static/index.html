@@ -5,39 +5,92 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>점심 메뉴 추천</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
     h1 { margin-bottom: 8px; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin: 12px 0; }
-    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; cursor: pointer; }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+    button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: #fff;
+    }
     button.primary { border-color: #111; }
-    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .chip { border:1px solid #ddd; border-radius:999px; padding:6px 10px; background:#f7f7f7; font-size:14px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .big { font-size: 28px; font-weight: 700; margin: 10px 0 0; }
-    .muted { color: #666; font-size: 14px; }
-    pre { background: #111; color: #eee; padding: 12px; border-radius: 10px; overflow: auto; }
-    input { padding: 10px 12px; border-radius: 10px; border: 1px solid #ccc; width: 180px; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .big {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 10px 0 0;
+    }
+    .muted {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .chip {
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: #f7f7f7;
+      font-size: 14px;
+    }
+
+    input {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      width: 180px;
+    }
   </style>
 </head>
+
 <body>
   <h1>🍱 점심 메뉴 추천</h1>
   <p class="muted">버튼을 눌러 랜덤 추천 또는 룰렛 추천을 실행해보세요.</p>
 
+  <!-- 결과 카드 -->
   <div class="card">
     <div class="row">
       <button class="primary" id="btnRandom">🎲 랜덤 추천</button>
       <button id="btnSpin">🎡 룰렛 돌리기</button>
       <input id="seed" placeholder="seed (옵션)" />
     </div>
+
     <div class="big" id="result">결과가 여기에 표시됩니다</div>
     <p class="muted" id="meta"></p>
   </div>
 
+  <!-- 메뉴 목록 카드 -->
   <div class="card">
     <div class="row">
       <button id="btnMenus">📋 메뉴 목록 보기</button>
     </div>
-    <pre id="menuList" class="chips muted">아직 메뉴 목록을 불러오지 못했습니다.</pre>
+    <div id="menuList" class="chips muted">
+      아직 메뉴 목록을 불러오지 않았습니다.
+    </div>
   </div>
 
   <p class="muted">API 문서: <a href="/docs" target="_blank">/docs</a></p>
@@ -51,6 +104,7 @@
     return res.json();
   }
 
+  // 랜덤 추천
   $("btnRandom").onclick = async () => {
     $("meta").textContent = "요청 중...";
     const data = await getJSON("/api/random");
@@ -58,15 +112,18 @@
     $("meta").textContent = "랜덤 추천 완료";
   };
 
+  // 룰렛 추천
   $("btnSpin").onclick = async () => {
     $("meta").textContent = "룰렛 도는 중...";
+    $("btnSpin").disabled = true;
+
     const seed = $("seed").value.trim();
     const qs = new URLSearchParams();
     if (seed) qs.set("seed", seed);
     qs.set("ticks", "18");
+
     const data = await getJSON("/api/spin?" + qs.toString());
 
-    // 간단한 룰렛 연출: ticks를 빠르게 표시
     let i = 0;
     const ticks = data.ticks || [];
     const timer = setInterval(() => {
@@ -75,28 +132,30 @@
       if (i >= ticks.length) {
         clearInterval(timer);
         $("result").textContent = data.result;
-        $("meta").textContent = `룰렛 완료 (ticks=${ticks.length}, duration_ms=${data.duration_ms})`;
+        $("meta").textContent =
+          `룰렛 완료 (ticks=${ticks.length}, duration_ms=${data.duration_ms})`;
+        $("btnSpin").disabled = false;
       }
     }, 80);
   };
 
+  // 메뉴 목록 보기
   $("btnMenus").onclick = async () => {
-  $("meta").textContent = "메뉴 목록 가져오는 중...";
-  const data = await getJSON("/api/menus");
+    $("meta").textContent = "메뉴 목록 가져오는 중...";
+    const data = await getJSON("/api/menus");
 
-  const box = $("menuList");
-  box.innerHTML = ""; // 기존 내용 초기화
+    const box = $("menuList");
+    box.innerHTML = "";
 
-  (data.menus || []).forEach((m) => {
-    const span = document.createElement("span");
-    span.className = "chip";
-    span.textContent = m;
-    box.appendChild(span);
-  });
+    (data.menus || []).forEach((m) => {
+      const span = document.createElement("span");
+      span.className = "chip";
+      span.textContent = m;
+      box.appendChild(span);
+    });
 
-  $("meta").textContent = `메뉴 ${data.count}개 로드됨`;
-};
-
+    $("meta").textContent = `메뉴 ${data.count}개 로드됨`;
+  };
 </script>
 </body>
 </html>
