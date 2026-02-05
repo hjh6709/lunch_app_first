@@ -1,2 +1,4 @@
-# lunch_app_first
-점메추 1탄
+## Run locally
+
+docker build -t lunch-api .
+docker run -p 8000:8000 lunch-api
