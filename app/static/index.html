@@ -378,18 +378,38 @@
     }
 
     async function spinRoulette() {
-      try{
+      try {
         setLoading(true);
-        const res = await fetch("/api/spin?ticks=18");
-        if(!res.ok) throw new Error("API 오류");
+        
+        const res = await fetch("/api/spin?ticks=22");
+        if (!res.ok) throw new Error("API 오류");
         const data = await res.json();
-        showPick(data.result);
-      } catch(e){
-        showToast("잠시 후 다시 시도해 주세요.");
-      } finally{
-        setLoading(false);
-      }
+        
+        const ticks = data.ticks || [];
+        if (ticks.length === 0) {
+            showPick(data.result);
+            return;
+        }
+
+      let i = 0;
+      const timer = setInterval(() => {
+        showPick(ticks[i] ?? data.result);
+        i++;
+
+        if (i >= ticks.length) {
+          clearInterval(timer);
+          showPick(data.result);
+          showToast("룰렛 완료!");
+          setLoading(false);
+        }
+      }, 80);
+
+    } catch (e) {
+      showToast("잠시 후 다시 시도해 주세요.");
+      setLoading(false);
     }
+  }
+
   </script>
 </body>
 </html>
