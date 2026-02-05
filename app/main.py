@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Query
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from pathlib import Path
 import json
@@ -7,6 +9,10 @@ import time
 import hashlib
 
 app = FastAPI(title="점심 메뉴 추천 서비스")
+
+STATIC_DIR = Path(__file__).parent / "static"
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 DATA_PATH = Path(__file__).parent / "menus.json"
 
@@ -26,6 +32,10 @@ def load_menus() -> list[str]:
     if not menus:
         raise RuntimeError("메뉴 데이터가 더이상 없습니다.")
     return menus
+
+@app.get("/")
+def root():
+    return FileResponse(STATIC_DIR / "index.html")
 
 @app.get("/health")
 
