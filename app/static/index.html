@@ -1,162 +1,395 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>점심 메뉴 추천</title>
+  <meta charset="UTF-8" />
+  <title>점심 뭐 먹지?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      max-width: 720px;
-      margin: 40px auto;
-      padding: 0 16px;
+    :root{
+      --bg1:#0b1020;
+      --bg2:#121a33;
+      --card:rgba(255,255,255,0.08);
+      --card2:rgba(255,255,255,0.06);
+      --text:#eef2ff;
+      --muted:rgba(238,242,255,0.7);
+      --line:rgba(255,255,255,0.14);
+      --shadow: 0 20px 60px rgba(0,0,0,0.45);
+      --radius: 22px;
     }
-    h1 { margin-bottom: 8px; }
-    .card {
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 16px;
-      margin: 12px 0;
-    }
-    button {
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-      background: #fff;
-    }
-    button.primary { border-color: #111; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
+    * { box-sizing: border-box; }
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(900px 500px at 20% 15%, rgba(124,58,237,0.55), transparent 55%),
+        radial-gradient(800px 500px at 85% 25%, rgba(59,130,246,0.55), transparent 60%),
+        radial-gradient(700px 450px at 50% 95%, rgba(16,185,129,0.35), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      overflow-x:hidden;
     }
-    .big {
-      font-size: 28px;
-      font-weight: 700;
-      margin: 10px 0 0;
+
+    /* subtle noise */
+    body:before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+      opacity:.10;
+      pointer-events:none;
+      mix-blend-mode:overlay;
     }
-    .muted {
-      color: #666;
+
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 28px 16px;
+    }
+
+    .shell{
+      width:100%;
+      max-width: 480px;
+      position:relative;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+      border-radius:999px;
+      font-size:13px;
+      color:var(--muted);
+      backdrop-filter: blur(10px);
+      margin-bottom: 14px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, var(--card), var(--card2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 26px 22px 18px;
+      backdrop-filter: blur(14px);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card:after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(600px 220px at 20% 0%, rgba(255,255,255,0.14), transparent 60%);
+      pointer-events:none;
+    }
+
+    h1{
+      margin: 6px 0 6px;
+      font-size: 26px;
+      letter-spacing: -0.6px;
+    }
+
+    .sub{
+      margin:0 0 18px;
+      color:var(--muted);
       font-size: 14px;
+      line-height: 1.5;
     }
 
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    .actions{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
       margin-top: 10px;
     }
-    .chip {
-      border: 1px solid #ddd;
-      border-radius: 999px;
-      padding: 6px 12px;
-      background: #f7f7f7;
-      font-size: 14px;
+
+    .btn{
+      width:100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 14px;
+      cursor:pointer;
+      font-weight: 650;
+      font-size: 15px;
+      letter-spacing: -0.2px;
+      transition: transform .08s ease, filter .15s ease, background .2s ease, border-color .2s ease;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      user-select:none;
     }
 
-    input {
+    .btn:active{ transform: translateY(1px) scale(0.998); }
+
+    .primary{
+      background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+    }
+    .primary:hover{ filter: brightness(1.08); border-color: rgba(255,255,255,0.26); }
+
+    .secondary{
+      background: rgba(255,255,255,0.05);
+    }
+    .secondary:hover{ filter: brightness(1.05); border-color: rgba(255,255,255,0.22); }
+
+    .btn .left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 0;
+    }
+
+    .icon{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      flex: 0 0 auto;
+    }
+
+    .label{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:2px;
+      min-width:0;
+    }
+
+    .label strong{
+      font-size: 15px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .label span{
+      font-size: 12.5px;
+      color: var(--muted);
+      font-weight: 500;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .chev{
+      color: rgba(238,242,255,0.75);
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .result{
+      margin-top: 18px;
+      border-top: 1px dashed rgba(255,255,255,0.18);
+      padding-top: 18px;
+      min-height: 72px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+    }
+
+    .result .empty{
+      color: rgba(238,242,255,0.55);
+      font-size: 13.5px;
+    }
+
+    .pick{
+      animation: pop .22s ease-out;
+      line-height: 1.35;
+    }
+
+    .pick .top{
+      color: rgba(238,242,255,0.75);
+      font-size: 13.5px;
+      margin-bottom: 6px;
+    }
+
+    .pick .menu{
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+    }
+
+    .tiny{
+      margin-top: 14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      color: rgba(238,242,255,0.55);
+      font-size: 12px;
+    }
+
+    .link{
+      color: rgba(238,242,255,0.65);
+      text-decoration:none;
+      border-bottom: 1px dotted rgba(238,242,255,0.25);
+    }
+    .link:hover{ color: rgba(238,242,255,0.9); }
+
+    .toast{
+      position:absolute;
+      left: 50%;
+      bottom: -10px;
+      transform: translateX(-50%);
+      background: rgba(15,23,42,0.85);
+      border: 1px solid rgba(255,255,255,0.14);
       padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      width: 180px;
+      border-radius: 14px;
+      font-size: 13px;
+      color: rgba(238,242,255,0.88);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+      white-space:nowrap;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-10px);
+    }
+
+    @keyframes pop{
+      from{ transform: translateY(6px); opacity: 0; }
+      to{ transform: translateY(0); opacity: 1; }
+    }
+
+    .loading{
+      opacity:.65;
+      pointer-events:none;
+    }
+
+    @media (max-width: 420px){
+      .card{ padding: 22px 18px 16px; }
+      h1{ font-size: 24px; }
+      .pick .menu{ font-size: 20px; }
     }
   </style>
 </head>
 
 <body>
-  <h1>🍱 점심 메뉴 추천</h1>
-  <p class="muted">버튼을 눌러 랜덤 추천 또는 룰렛 추천을 실행해보세요.</p>
+  <div class="wrap">
+    <div class="shell">
+      <div class="badge">🍽️ Lunch Picker · 오늘 점심 한 번에</div>
 
-  <!-- 결과 카드 -->
-  <div class="card">
-    <div class="row">
-      <button class="primary" id="btnRandom">🎲 랜덤 추천</button>
-      <button id="btnSpin">🎡 룰렛 돌리기</button>
-      <input id="seed" placeholder="seed (옵션)" />
+      <div class="card">
+        <h1>오늘 점심 뭐 먹지?</h1>
+        <p class="sub">고민은 여기까지만. 버튼 한 번이면 끝.</p>
+
+        <div class="actions">
+          <button class="btn primary" id="btnRandom" onclick="pickRandom()">
+            <div class="left">
+              <div class="icon">⚡</div>
+              <div class="label">
+                <strong>그냥 골라줘</strong>
+                <span>빠르게 하나만 추천</span>
+              </div>
+            </div>
+            <div class="chev">›</div>
+          </button>
+
+          <button class="btn secondary" id="btnSpin" onclick="spinRoulette()">
+            <div class="left">
+              <div class="icon">🎡</div>
+              <div class="label">
+                <strong>룰렛으로 고르기</strong>
+                <span>재밌게 돌려서 결정</span>
+              </div>
+            </div>
+            <div class="chev">›</div>
+          </button>
+        </div>
+
+        <div class="result" id="result">
+          <div class="empty">원하는 방식으로 골라보세요.</div>
+        </div>
+
+        <div class="tiny">
+          <span>© 2026 Lunch Picker</span>
+          <a class="link" href="/docs" target="_blank" rel="noreferrer">개발자용</a>
+        </div>
+
+        <div class="toast" id="toast">잠깐만요…</div>
+      </div>
     </div>
-
-    <div class="big" id="result">결과가 여기에 표시됩니다</div>
-    <p class="muted" id="meta"></p>
   </div>
 
-  <!-- 메뉴 목록 카드 -->
-  <div class="card">
-    <div class="row">
-      <button id="btnMenus">📋 메뉴 목록 보기</button>
-    </div>
-    <div id="menuList" class="chips muted">
-      아직 메뉴 목록을 불러오지 않았습니다.
-    </div>
-  </div>
+  <script>
+    const resultEl = document.getElementById("result");
+    const toastEl = document.getElementById("toast");
+    const btnRandom = document.getElementById("btnRandom");
+    const btnSpin = document.getElementById("btnSpin");
 
-  <p class="muted">API 문서: <a href="/docs" target="_blank">/docs</a></p>
+    function setLoading(isLoading) {
+      [btnRandom, btnSpin].forEach(b => b.classList.toggle("loading", isLoading));
+      if (isLoading) showToast("잠깐만요…");
+      else hideToast();
+    }
 
-<script>
-  const $ = (id) => document.getElementById(id);
+    function showToast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+    }
+    function hideToast(){
+      toastEl.classList.remove("show");
+    }
 
-  async function getJSON(url) {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    return res.json();
-  }
+    function showPick(menu){
+      resultEl.innerHTML = `
+        <div class="pick">
+          <div class="top">오늘의 점심은</div>
+          <div class="menu">🍽️ ${escapeHtml(menu)}</div>
+        </div>
+      `;
+    }
 
-  // 랜덤 추천
-  $("btnRandom").onclick = async () => {
-    $("meta").textContent = "요청 중...";
-    const data = await getJSON("/api/random");
-    $("result").textContent = data.menu;
-    $("meta").textContent = "랜덤 추천 완료";
-  };
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
 
-  // 룰렛 추천
-  $("btnSpin").onclick = async () => {
-    $("meta").textContent = "룰렛 도는 중...";
-    $("btnSpin").disabled = true;
-
-    const seed = $("seed").value.trim();
-    const qs = new URLSearchParams();
-    if (seed) qs.set("seed", seed);
-    qs.set("ticks", "18");
-
-    const data = await getJSON("/api/spin?" + qs.toString());
-
-    let i = 0;
-    const ticks = data.ticks || [];
-    const timer = setInterval(() => {
-      $("result").textContent = ticks[i] ?? data.result;
-      i++;
-      if (i >= ticks.length) {
-        clearInterval(timer);
-        $("result").textContent = data.result;
-        $("meta").textContent =
-          `룰렛 완료 (ticks=${ticks.length}, duration_ms=${data.duration_ms})`;
-        $("btnSpin").disabled = false;
+    async function pickRandom() {
+      try{
+        setLoading(true);
+        const res = await fetch("/api/random");
+        if(!res.ok) throw new Error("API 오류");
+        const data = await res.json();
+        showPick(data.menu);
+      } catch(e){
+        showToast("잠시 후 다시 시도해 주세요.");
+      } finally{
+        setLoading(false);
       }
-    }, 80);
-  };
+    }
 
-  // 메뉴 목록 보기
-  $("btnMenus").onclick = async () => {
-    $("meta").textContent = "메뉴 목록 가져오는 중...";
-    const data = await getJSON("/api/menus");
-
-    const box = $("menuList");
-    box.innerHTML = "";
-
-    (data.menus || []).forEach((m) => {
-      const span = document.createElement("span");
-      span.className = "chip";
-      span.textContent = m;
-      box.appendChild(span);
-    });
-
-    $("meta").textContent = `메뉴 ${data.count}개 로드됨`;
-  };
-</script>
+    async function spinRoulette() {
+      try{
+        setLoading(true);
+        const res = await fetch("/api/spin?ticks=18");
+        if(!res.ok) throw new Error("API 오류");
+        const data = await res.json();
+        showPick(data.result);
+      } catch(e){
+        showToast("잠시 후 다시 시도해 주세요.");
+      } finally{
+        setLoading(false);
+      }
+    }
+  </script>
 </body>
 </html>
-
